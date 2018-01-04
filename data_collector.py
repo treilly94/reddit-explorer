@@ -1,6 +1,7 @@
 import requests
 import requests.auth
 import json
+import pandas as pd
 
 
 def credentials_reader():
@@ -23,6 +24,16 @@ def get_saved_json(creds, auth):
     return response.json()
 
 
+def post_extractor(raw):
+    children = raw.get("data").get("children")
+    children = [i.get("data") for i in children]
+
+    columns = ["created", "author", "num_comments", "over_18", "permalink", "score", "subreddit", "title"]
+    df = pd.DataFrame(children)[columns]
+
+    return df
+
+
 def data_collector():
     # Get credentials
     creds = credentials_reader()
@@ -32,9 +43,15 @@ def data_collector():
     auth = get_auth(creds)
     print(auth)
 
-    # Get saved posts
-    json = get_saved_json(creds, auth)
-    print(json)
+    # Get raw saved
+    raw = get_saved_json(creds, auth)
+    print(raw)
+
+    # Get posts
+    posts = post_extractor(raw)
+
+    # Write posts to file
+    posts.to_csv("saved_posts.csv", index=False)
 
 
 if __name__ == "__main__":
